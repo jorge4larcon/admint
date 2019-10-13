@@ -10,52 +10,58 @@ use regex::Regex;
 
 fn bool_validator(b: String) -> Result<(), String> {
     if let Ok(_b) = b.parse::<bool>() {
-        Ok(())
+        return Ok(());
     }
-    format!("{} is not a valid boolean value")
+    Err(format!("{} is not a valid boolean value", b))
 }
 
 fn list_size_validator(ll: String) -> Result<(), String> {
     if let Ok(_ll) = ll.parse::<u16>() {        
-        Ok(())
+        return Ok(());
     }
-    format!("{} is not a valid list size number, this value must be between [1,65535]")
+    Err(format!("{} is not a valid list size number, this value must be between [1,65535]", ll))
 }
 
 fn usize_validator(num: String) -> Result<(), String> {
     if let Ok(_n) = num.parse::<usize>() {
-        Ok(())
+        return Ok(());
     }
-    format!("{} is not a valid unsigned number")
+    Err(format!("{} is not a valid unsigned number", num))
 }
 
 fn mac_validator(mac: String) -> Result<(), String> {
     if mac.is_ascii() {
         let mac_re = Regex::new(r"^((([a-fA-F0-9][a-fA-F0-9]+[-]){5}|([a-fA-F0-9][a-fA-F0-9]+[:]){5})([a-fA-F0-9][a-fA-F0-9])$)|(^([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]+[.]){2}([a-fA-F0-9][a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]))$").unwrap();
-        Ok(())
+        if mac_re.is_match(&mac) {
+            return Ok(());
+        }
     }
-    format!("{} is not a valid mac address")
+    Err(format!("{} is not a valid mac address", mac))
 }
 
 fn username_pattern_validator(pattern: String) -> Result<(), String> {
     if pattern.is_ascii() {
-        Ok(())
+        return Ok(());
     }
-    format!("{} is not a valid pattern", pattern)
+    Err(format!("{} is not a valid pattern", pattern))
 }
 
 fn key_password_validator(key: String) -> Result<(), String> {
-    key.is_ascii() && key.len() < 33
+    if key.is_ascii() && key.len() < 33 {
+        return Ok(());
+    }
+    Err(format!("This value must have less than 33 characters and all must be ascii"))
 }
 
 fn capacity_validator(c: String) -> Result<(), String> {
     if let Ok(v) = c.parse::<u16>() {
         if v < 2 {
-            return Err(format!("The capacity must be between [2,65535]"));
+            return Err(format!("This value must be between [2,65535]"));
         } else {
             return Ok(());
         }
     }
+    return Err(format!("This value must be between [2,65535]"));
 }
 
 fn main() {
@@ -64,11 +70,17 @@ fn main() {
                           .author("Jorge A. <jorge4larcon@gmail.com>")
                           .about("ADministration tool for MINT server")
                           .setting(AppSettings::ArgRequiredElseHelp)
+                          .arg(Arg::with_name("config")
+                               .short("c")
+                               .long("config")
+                               .help("Get the running configuration of the server")
+                               .takes_value(false))
                           .subcommand(SubCommand::with_name("set-dropvotes")
                                        .about("Set the drop votes of the server, this command can drop users that are logged in the server")
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
                                        .arg(Arg::with_name("drop-votes")
+                                            .index(1)
                                             .short("d")
                                             .long("drop-votes")
                                             .value_name("DROP VOTES")
@@ -82,6 +94,7 @@ fn main() {
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
                                        .arg(Arg::with_name("state")
+                                            .index(1)
                                             .short("s")
                                             .long("state")
                                             .value_name("STATE")
@@ -89,12 +102,13 @@ fn main() {
                                             .takes_value(true)
                                             .required(true)
                                             .number_of_values(1)
-                                            .validator(list_size_validator)))
+                                            .validator(bool_validator)))
                           .subcommand(SubCommand::with_name("set-listsize")
                                        .about("Set the list size of the server")
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
-                                       .arg(Arg::with_name("list-size")                                       
+                                       .arg(Arg::with_name("list-size")
+                                            .index(1)
                                             .short("l")
                                             .long("list-size")
                                             .value_name("LIST SIZE")
@@ -103,11 +117,12 @@ fn main() {
                                             .required(true)
                                             .number_of_values(1)
                                             .validator(list_size_validator)))
-                          .subcommand(SubCommand::with_name("set-capacity")
+                          .subcommand(SubCommand::with_name("set-capacity")                          
                                        .about("Set the capacity of the server")
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
-                                       .arg(Arg::with_name("capacity")                                      
+                                       .arg(Arg::with_name("capacity")
+                                            .index(1)
                                             .short("c")
                                             .long("capacity")
                                             .value_name("CAPACITY")
@@ -121,6 +136,7 @@ fn main() {
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
                                        .arg(Arg::with_name("password")
+                                            .index(1)
                                             .short("p")
                                             .long("password")
                                             .value_name("PASSWORD")
@@ -134,6 +150,7 @@ fn main() {
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
                                        .arg(Arg::with_name("key")
+                                            .index(1)
                                             .short("k")
                                             .long("key")
                                             .value_name("KEY")
@@ -147,6 +164,7 @@ fn main() {
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
                                        .arg(Arg::with_name("ip")
+                                            .index(1)
                                             .short("i")
                                             .long("ip")
                                             .value_name("IP ADDRESS")
@@ -159,6 +177,7 @@ fn main() {
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
                                        .arg(Arg::with_name("mac")
+                                            .index(1)
                                             .short("m")
                                             .long("mac")
                                             .value_name("MAC")
@@ -172,6 +191,7 @@ fn main() {
                                        .version("1.0")
                                        .author("Jorge A. <jorge4larcon@gmail.com>")
                                        .arg(Arg::with_name("pattern")
+                                            .index(1)
                                             .short("p")
                                             .long("pattern")
                                             .value_name("PATTERN")
@@ -179,12 +199,9 @@ fn main() {
                                             .takes_value(true)
                                             .required(true)
                                             .number_of_values(1)
-                                            .validator(username_pattern_validator)))
-                          .subcommand(SubCommand::with_name("get-index")
-                                       .about("Get a list of clients from the server")
-                                       .version("1.0")
-                                       .author("Jorge A. <jorge4larcon@gmail.com>")
-                                       .arg(Arg::with_name("start")
+                                            .validator(username_pattern_validator))
+                                        .arg(Arg::with_name("start")
+                                            .index(2)
                                             .short("s")
                                             .long("start")
                                             .value_name("START_INDEX")
@@ -194,7 +211,23 @@ fn main() {
                                             .required(false)
                                             .number_of_values(1)
                                             .validator(usize_validator)))
+                          .subcommand(SubCommand::with_name("get-index")
+                                       .about("Get a list of clients from the server")
+                                       .version("1.0")
+                                       .author("Jorge A. <jorge4larcon@gmail.com>")
+                                       .arg(Arg::with_name("start")
+                                            .index(1)
+                                            .short("s")
+                                            .long("start")
+                                            .value_name("START_INDEX")
+                                            .help("The start index of the list")
+                                            .default_value("0")
+                                            .takes_value(true)
+                                            .required(false)
+                                            .number_of_values(1)
+                                            .validator(usize_validator))
                                         .arg(Arg::with_name("end")
+                                            .index(2)
                                             .short("e")
                                             .long("end")
                                             .value_name("END_INDEX")
