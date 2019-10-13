@@ -51,7 +51,9 @@ impl BaseCommand {
             if let Some((password, address)) = password_and_address(subcommand_matches) {
                 if let Some(drop_votes) = subcommand_matches.value_of("drop-votes") {
                     if let Ok(drop_votes) = drop_votes.parse::<u8>() {
-                        return Some( BaseCommand { password, address, command: Command::Set(Set::DropVotes(drop_votes)) } );
+                        if drop_votes > 0 {
+                            return Some( BaseCommand { password, address, command: Command::Set(Set::DropVotes(drop_votes)) } );
+                        }
                     }
                 }
             }            
@@ -75,7 +77,9 @@ impl BaseCommand {
             if let Some((password, address)) = password_and_address(subcommand_matches) {
                 if let Some(capacity) = subcommand_matches.value_of("capacity") {
                     if let Ok(capacity) = capacity.parse::<u16>() {
-                        return Some( BaseCommand { password, address, command: Command::Set(Set::Capacity(capacity)) } );
+                        if capacity > 1 {
+                            return Some( BaseCommand { password, address, command: Command::Set(Set::Capacity(capacity)) } );
+                        }
                     }
                 }
             }            
@@ -180,7 +184,7 @@ impl BaseCommand {
                     },
                     Get::Mac(mac) => {
                         json_string.push_str("\"how\":\"mac\",");
-                        json_string.push_str(&format!("\"mac\":{}", mac));
+                        json_string.push_str(&format!("\"mac\":\"{}\"", mac));
                     },
                     Get::RunningConfiguration => {
                         json_string.push_str("\"how\":\"running_configuration\"");
@@ -214,11 +218,9 @@ impl BaseCommand {
                         match &self.command {
                             Command::Set(set) => {                                
                                 match set {
-                                    Set::Capacity(_) => {
-                                        return format!("result: {}", result);
+                                    Set::Capacity(_) => { // Just returns result
                                     },
-                                    Set::DropVerification(_) => {
-                                        return format!("result: {}", result);
+                                    Set::DropVerification(_) => { // Just returns result
                                     },
                                     Set::DropVotes(_) => {
                                         if let Some(dropped_clients) = answer.get("dropped_clients") {
@@ -230,39 +232,58 @@ impl BaseCommand {
                                             }
                                         }
                                     },
-                                    Set::Key(_) => {
-                                        return format!("result: {}", result);
+                                    Set::Key(_) => { // Just returns result                                    
                                     },
-                                    Set::ListSize(_) => {
-                                        return format!("result: {}", result);
+                                    Set::ListSize(_) => { // Just returns result
                                     },
-                                    Set::Password(_) => {
-                                        return format!("result: {}", result);
+                                    Set::Password(_) => { // Just returns result
                                     }
                                 }
                             },
-                            Command::Get(get) => {                                
+                            Command::Get(get) => {  
                                 match get {
-                                    Get::Index { start_index: _s, end_index: _e } => {
+                                    Get::Index { start_index, end_index: _e } => {
+                                        if let Some(clients) = answer.get("clients") {
+                                            if let Some(clients) = clients.as_array() {
+                                                string.push_str(&format!("\n{} client(s):", clients.len()));
+                                                for (index, client) in clients.iter().enumerate() {
+                                                    string.push_str(&format!("\n{} {}", start_index + index, client));
+                                                }
+                                            }
+                                        }
                                     },
                                     Get::Mac(_) => {
+                                        if let Some(client) = answer.get("client") {
+                                            string.push_str(&format!("\n{}", client));
+                                        }
                                     },
                                     Get::RunningConfiguration => {
+                                        if let Some(run_conf) = answer.get("running_config") {
+                                            string.push_str(&format!("\n{}", run_conf.as_str().unwrap()));
+                                        }
                                     },
                                     Get::Username { pattern: _p, start_index: _s } => {
-                                        return format!("result: {}", result);
+                                        if let Some(clients) = answer.get("clients") {
+                                            if let Some(clients) = clients.as_array() {
+                                                string.push_str(&format!("\n{} client(s):", clients.len()));
+                                                for (index, client) in clients.iter().enumerate() {
+                                                    string.push_str(&format!("\n{} {}", index, client));
+                                                }
+                                            }
+                                        }
+                                        if let Some(end_index) = answer.get("end_index") {
+                                            string.push_str(&format!("\nend index: {}", end_index));
+                                        }
                                     }
                                 }
                             },
                             Command::Drop(drop) => {
                                 match drop {
                                     Drop::Ip(_) => {
-                                        return format!("result: {}", result);
                                     }
                                 }
                             }
-                        }
-                        return string;
+                        }                        
                     } else {
                         return format!("Could not parse the reply of {} as a valid MINT server reply, raw reply:\n{}", self.address, answer);
                     }
@@ -271,7 +292,7 @@ impl BaseCommand {
                         string.push_str(&format!("error code: {}", error));
                         if let Some(name) = answer.get("name") {
                             if let Some(name) = name.as_str() {
-                                string.push_str(&format!("\nName:       {}", name));
+                                string.push_str(&format!("\nname: {}", name));
                             } else {
                                 string.push_str("\nUnparsable name");
                             }
@@ -279,20 +300,24 @@ impl BaseCommand {
                             string.push_str("\nUnparsable name");
                         }
                     } else {
-                        return format!("Could not parse the reply of {} as a valid MINT server reply, raw reply:\n{}", self.address, answer);
+                        string.push_str(&format!("Could not parse the reply of {} as a valid MINT server reply, raw reply:\n{}", self.address, answer));
                     }
                 }
             } else {
-                return format!("Could not parse the reply of {}, raw reply:\n{}", self.address, answer);
+                string.push_str(&format!("Could not parse the reply of {}, raw reply:\n{}", self.address, answer));
             }
+        } else {
+            string.push_str(&format!("No answer from {}", self.address));
         }
-        return format!("No answer from {}", self.address);
+        return string;
     }
 
-    fn send(&self) -> Option<String> {        
+    fn send(&self) -> Option<String> {
+        log::debug!("Connecting with {} ...", self.address);
         if let Ok(mut client) = net::TcpStream::connect(self.address) {
             log::debug!("Connection established with {}", self.address);
             let request = self.to_json_string();
+            log::debug!("request:\n{}", request);
             if let Ok(bytes_written) = client.write(request.as_bytes()) {
                 if bytes_written == request.as_bytes().len() {
                     log::info!("The request was sent succesfully [{} byte(s)]", bytes_written);
@@ -305,6 +330,7 @@ impl BaseCommand {
                     if let Ok(bytes_received) = client.read(&mut buffer) {
                         log::info!("{} byte(s) received", bytes_received);
                         let reply = String::from_utf8_lossy(&buffer[..bytes_received]);
+                        log::debug!("raw reply received:\n{}", reply);
                         return Some(reply.to_string());
                     } else {
                         log::error!("{} didn't reply anything", self.address);

@@ -2,11 +2,14 @@ extern crate clap;
 extern crate regex;
 
 use admint::ipparser;
+use admint::run;
+use admint::commands;
 use clap::AppSettings;
 use clap::SubCommand;
 use clap::App;
 use clap::Arg;
 use regex::Regex;
+use std::process;
 
 fn ipv4_address_validator(addr: String) -> Result<(), String> {
     if ipparser::is_ipv4_addr(&addr) {
@@ -30,10 +33,10 @@ fn bool_validator(b: String) -> Result<(), String> {
 }
 
 fn list_size_validator(ll: String) -> Result<(), String> {
-    if let Ok(_ll) = ll.parse::<u16>() {        
+    if let Ok(_ll) = ll.parse::<u16>() {
         return Ok(());
     }
-    Err(format!("{} is not a valid list size number, this value must be between [1,65535]", ll))
+    Err(format!("{} is not a valid list size number, this value must be between [0,65535]", ll))
 }
 
 fn usize_validator(num: String) -> Result<(), String> {
@@ -78,8 +81,19 @@ fn capacity_validator(c: String) -> Result<(), String> {
     return Err(format!("This value must be between [2,65535]"));
 }
 
+fn drop_votes_validator(c: String) -> Result<(), String> {
+    if let Ok(v) = c.parse::<u16>() {
+        if v < 1 {
+            return Err(format!("This value must be between [1,255]"));
+        } else {
+            return Ok(());
+        }
+    }
+    return Err(format!("This value must be between [1,255]"));
+}
+
 fn main() {
-    let _matches = App::new("ADMINT")
+    let matches = App::new("ADMINT")
                           .version("1.0")
                           .author("Jorge A. <jorge4larcon@gmail.com>")
                           .about("ADministration tool for MINT server")
@@ -120,7 +134,7 @@ fn main() {
                                             .takes_value(true)
                                             .required(true)
                                             .number_of_values(1)
-                                            .validator(list_size_validator))
+                                            .validator(drop_votes_validator))
                                         .arg(Arg::with_name("admin-password")
                                             .index(2)
                                             .short("P")
@@ -391,9 +405,8 @@ fn main() {
                                             .long("start")
                                             .value_name("START_INDEX")
                                             .help("The start index of the list")
-                                            .default_value("0")
                                             .takes_value(true)
-                                            .required(false)
+                                            .required(true)
                                             .number_of_values(1)
                                             .validator(usize_validator))
                                        .arg(Arg::with_name("admin-password")
@@ -424,10 +437,9 @@ fn main() {
                                             .short("s")
                                             .long("start")
                                             .value_name("START_INDEX")
-                                            .help("The start index of the list")
-                                            .default_value("0")
+                                            .help("The start index of the list")                                            
                                             .takes_value(true)
-                                            .required(false)
+                                            .required(true)
                                             .number_of_values(1)
                                             .validator(usize_validator))
                                         .arg(Arg::with_name("end")
@@ -436,9 +448,8 @@ fn main() {
                                             .long("end")
                                             .value_name("END_INDEX")
                                             .help("The end index of the list")
-                                            .default_value("10")
                                             .takes_value(true)
-                                            .required(false)
+                                            .required(true)
                                             .number_of_values(1)
                                             .validator(usize_validator))
                                        .arg(Arg::with_name("admin-password")
@@ -461,4 +472,12 @@ fn main() {
                                             .number_of_values(1)
                                             .validator(sock_address_v4_validator)))
                           .get_matches();
+
+    if let Some(command) = commands::BaseCommand::from_clap_matches(&matches) {
+        run(command);
+    } else {
+        eprintln!("I didn't understand your command");
+        process::exit(1);
+    }
+
 }
