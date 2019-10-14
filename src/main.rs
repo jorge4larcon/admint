@@ -82,7 +82,7 @@ fn capacity_validator(c: String) -> Result<(), String> {
 }
 
 fn drop_votes_validator(c: String) -> Result<(), String> {
-    if let Ok(v) = c.parse::<u16>() {
+    if let Ok(v) = c.parse::<u8>() {
         if v < 1 {
             return Err(format!("This value must be between [1,255]"));
         } else {
