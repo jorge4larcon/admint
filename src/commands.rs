@@ -3,6 +3,7 @@ extern crate log;
 extern crate clap;
 use std::net;
 use crate::ipparser;
+use crate::clients;
 use std::time;
 use std::io::{
     Read,
@@ -227,7 +228,11 @@ impl BaseCommand {
                                             if let Some(dropped_clients) = dropped_clients.as_array() {
                                                 string.push_str(&format!("\n{} dropped client(s):", dropped_clients.len()));
                                                 for (index, dropped_client) in dropped_clients.iter().enumerate() {
-                                                    string.push_str(&format!("\n{} {}", index, dropped_client));
+                                                    if let Some(dropped_client) = clients::Client::from_json_value(dropped_client) {
+                                                        string.push_str(&format!("\n[{}] {}", index, dropped_client));
+                                                    } else {
+                                                        string.push_str(&format!("\n[{}] {}", index, dropped_client));
+                                                    }
                                                 }
                                             }
                                         }
@@ -247,14 +252,22 @@ impl BaseCommand {
                                             if let Some(clients) = clients.as_array() {
                                                 string.push_str(&format!("\n{} client(s):", clients.len()));
                                                 for (index, client) in clients.iter().enumerate() {
-                                                    string.push_str(&format!("\n{} {}", start_index + index, client));
+                                                    if let Some(client) = clients::Client::from_json_value(client) {
+                                                        string.push_str(&format!("\n[{}] {}", start_index + index, client));
+                                                    } else {
+                                                        string.push_str(&format!("\n[{}] {}", start_index + index, client));
+                                                    }
                                                 }
                                             }
                                         }
                                     },
                                     Get::Mac(_) => {
                                         if let Some(client) = answer.get("client") {
-                                            string.push_str(&format!("\n{}", client));
+                                            if let Some(client) = clients::Client::from_json_value(client) {
+                                                string.push_str(&format!("\n{}", client));
+                                            } else {
+                                                string.push_str(&format!("\n{}", client));
+                                            }
                                         }
                                     },
                                     Get::RunningConfiguration => {
@@ -267,7 +280,11 @@ impl BaseCommand {
                                             if let Some(clients) = clients.as_array() {
                                                 string.push_str(&format!("\n{} client(s):", clients.len()));
                                                 for (index, client) in clients.iter().enumerate() {
-                                                    string.push_str(&format!("\n{} {}", index, client));
+                                                    if let Some(client) = clients::Client::from_json_value(client) {
+                                                        string.push_str(&format!("\n[{}] {}", index, client));
+                                                    } else {
+                                                        string.push_str(&format!("\n[{}] {}", index, client));
+                                                    }
                                                 }
                                             }
                                         }
