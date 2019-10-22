@@ -6,8 +6,8 @@ pub mod commands;
 pub mod clients;
 use std::process;
 
-pub fn run(command: commands::BaseCommand) {
-    if let Ok(()) = config::setup_logging(&log::LevelFilter::Info) {
+pub fn run(command: commands::BaseCommand) {    
+    if let Ok(()) = config::setup_logging(&log::LevelFilter::Warn) {
         log::debug!("Logging was set up");
         println!("{}", command.send_and_interpret());
     } else {
