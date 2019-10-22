@@ -227,11 +227,17 @@ impl BaseCommand {
                                         if let Some(dropped_clients) = answer.get("dropped_clients") {
                                             if let Some(dropped_clients) = dropped_clients.as_array() {
                                                 string.push_str(&format!("\n{} dropped client(s):", dropped_clients.len()));
-                                                for (index, dropped_client) in dropped_clients.iter().enumerate() {
-                                                    if let Some(dropped_client) = clients::Client::from_json_value(dropped_client) {
-                                                        string.push_str(&format!("\n[{}] {}", index, dropped_client));
+                                                for (index, dropped_client) in dropped_clients.iter().enumerate() {                                                
+                                                    let mac = if dropped_client.get("mac").is_none() {
+                                                        ""                                                        
                                                     } else {
-                                                        string.push_str(&format!("\n[{}] {}", index, dropped_client));
+                                                        dropped_client.get("mac").unwrap().as_str().unwrap_or("")                                                        
+                                                    };
+
+                                                    if let Some(dropped_client) = clients::Client::from_json_value(dropped_client) {
+                                                        string.push_str(&format!("\n[{}] {} {}", index, mac, dropped_client));
+                                                    } else {
+                                                        string.push_str(&format!("\n[{}] {} {}", index, mac, dropped_client));
                                                     }
                                                 }
                                             }
@@ -252,10 +258,15 @@ impl BaseCommand {
                                             if let Some(clients) = clients.as_array() {
                                                 string.push_str(&format!("\n{} client(s):", clients.len()));
                                                 for (index, client) in clients.iter().enumerate() {
-                                                    if let Some(client) = clients::Client::from_json_value(client) {
-                                                        string.push_str(&format!("\n[{}] {}", start_index + index, client));
+                                                    let mac = if client.get("mac").is_none() {
+                                                        ""                                                        
                                                     } else {
-                                                        string.push_str(&format!("\n[{}] {}", start_index + index, client));
+                                                        client.get("mac").unwrap().as_str().unwrap_or("")                                                        
+                                                    };
+                                                    if let Some(client) = clients::Client::from_json_value(client) {
+                                                        string.push_str(&format!("\n[{}] {} {}", start_index + index, mac, client));
+                                                    } else {
+                                                        string.push_str(&format!("\n[{}] {} {}", start_index + index, mac, client));
                                                     }
                                                 }
                                             }
@@ -263,10 +274,15 @@ impl BaseCommand {
                                     },
                                     Get::Mac(_) => {
                                         if let Some(client) = answer.get("client") {
-                                            if let Some(client) = clients::Client::from_json_value(client) {
-                                                string.push_str(&format!("\n{}", client));
+                                            let mac = if client.get("mac").is_none() {
+                                                ""                                                        
                                             } else {
-                                                string.push_str(&format!("\n{}", client));
+                                                client.get("mac").unwrap().as_str().unwrap_or("")                                                        
+                                            };
+                                            if let Some(client) = clients::Client::from_json_value(client) {
+                                                string.push_str(&format!("\n{} {}", mac, client));
+                                            } else {
+                                                string.push_str(&format!("\n{} {}", mac, client));
                                             }
                                         }
                                     },
@@ -280,10 +296,17 @@ impl BaseCommand {
                                             if let Some(clients) = clients.as_array() {
                                                 string.push_str(&format!("\n{} client(s):", clients.len()));
                                                 for (index, client) in clients.iter().enumerate() {
-                                                    if let Some(client) = clients::Client::from_json_value(client) {
-                                                        string.push_str(&format!("\n[{}] {}", index, client));
+
+                                                    let mac = if client.get("mac").is_none() {
+                                                        ""                                                        
                                                     } else {
-                                                        string.push_str(&format!("\n[{}] {}", index, client));
+                                                        client.get("mac").unwrap().as_str().unwrap_or("")                                                        
+                                                    };
+
+                                                    if let Some(client) = clients::Client::from_json_value(client) {
+                                                        string.push_str(&format!("\n[{}] {} {}", index, mac, client));
+                                                    } else {
+                                                        string.push_str(&format!("\n[{}] {} {}", index, mac, client));
                                                     }
                                                 }
                                             }
