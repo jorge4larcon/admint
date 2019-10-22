@@ -3,10 +3,11 @@ extern crate log;
 pub mod config;
 pub mod ipparser;
 pub mod commands;
+pub mod clients;
 use std::process;
 
 pub fn run(command: commands::BaseCommand) {
-    if let Ok(()) = config::setup_logging(&log::LevelFilter::Debug) {
+    if let Ok(()) = config::setup_logging(&log::LevelFilter::Info) {
         log::debug!("Logging was set up");
         println!("{}", command.send_and_interpret());
     } else {
