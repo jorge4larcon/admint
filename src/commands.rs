@@ -1,3 +1,7 @@
+// Author: Jorge Alarcon Alvarez
+// Email:  jorge4larcon@gmail.com
+// This module is used to parse the commands introduced by user.
+
 extern crate serde_json;
 extern crate log;
 extern crate clap;

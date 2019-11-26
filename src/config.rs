@@ -1,3 +1,7 @@
+// Author: Jorge Alarcon Alvarez
+// Email:  jorge4larcon@gmail.com
+// This module is used to configure the application logging.
+
 extern crate fern;
 extern crate log;
 

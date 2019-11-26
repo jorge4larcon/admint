@@ -1,3 +1,7 @@
+// Author: Jorge Alarcon Alvarez
+// Email:  jorge4larcon@gmail.com
+// This module is used to parse the network addresses.
+
 use std::str::{FromStr};
 use std::net::{IpAddr, SocketAddr, SocketAddrV4, SocketAddrV6, Ipv6Addr, Ipv4Addr};
 use regex::Regex;

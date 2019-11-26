@@ -1,3 +1,8 @@
+// Author: Jorge Alarcon Alvarez
+// Email:  jorge4larcon@gmail.com
+// This module is used to display and parse the clients replied by the server.
+
+
 extern crate serde_json;
 extern crate regex;
 

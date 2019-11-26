@@ -1,3 +1,7 @@
+// Author: Jorge Alarcon Alvarez
+// Email:  jorge4larcon@gmail.com
+// This module is where the program parses the commands, validate their values and starts the program.
+
 extern crate clap;
 extern crate regex;
 
